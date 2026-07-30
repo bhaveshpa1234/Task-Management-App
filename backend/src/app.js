@@ -4,6 +4,7 @@ const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 
 const authRoutes = require("./routes/authRoutes");
+const taskRoutes = require("./routes/taskRoutes");
 
 const app = express();
 
@@ -26,5 +27,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+
+app.use("/api/tasks", taskRoutes);
 
 module.exports = app;
