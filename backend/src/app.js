@@ -3,6 +3,8 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 
+const authRoutes = require("./routes/authRoutes");
+
 const app = express();
 
 app.use(
@@ -19,9 +21,10 @@ app.use(morgan("dev"));
 
 app.get("/", (req, res) => {
   res.json({
-    success: true,
     message: "Task Management API is running",
   });
 });
+
+app.use("/api/auth", authRoutes);
 
 module.exports = app;
