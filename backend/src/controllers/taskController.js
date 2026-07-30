@@ -31,14 +31,32 @@ const createTask = async (req, res) => {
 
 const getTasks = async (req, res) => {
   try {
-    const tasks = await Task.find({
+    const page = Number(req.query.page) || 1;
+    const limit = 10;
+
+    const search = req.query.search || "";
+
+    const query = {
       user: req.user._id,
-    }).sort({ createdAt: -1 });
+      name: { $regex: search, $options: "i" },
+    };
+
+    const totalTasks = await Task.countDocuments(query);
+
+    const tasks = await Task.find(query)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
 
     res.status(200).json({
       tasks,
+      currentPage: page,
+      totalPages: Math.ceil(totalTasks / limit),
+      totalTasks,
     });
   } catch (error) {
+    console.log(error);
+
     res.status(500).json({
       message: "Server Error",
     });
