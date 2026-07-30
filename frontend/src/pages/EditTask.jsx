@@ -1,0 +1,159 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
+
+import api from "../services/api";
+
+function EditTask() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    name: "",
+    time: "",
+    description: "",
+    isImportant: false,
+  });
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+
+    setFormData({
+      ...formData,
+      [name]: type === "checkbox" ? checked : value,
+    });
+  };
+
+  const getTask = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await api.get("/tasks", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const task = response.data.tasks.find((item) => item._id === id);
+
+      if (!task) {
+        toast.error("Task not found");
+        navigate("/dashboard");
+        return;
+      }
+
+      setFormData({
+        name: task.name,
+        time: task.time.slice(0, 16),
+        description: task.description || "",
+        isImportant: task.isImportant,
+      });
+    } catch (error) {
+      toast.error("Something went wrong");
+    }
+  };
+
+  useEffect(() => {
+    getTask();
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await api.patch(`/tasks/${id}`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      toast.success(response.data.message);
+
+      navigate("/dashboard");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Something went wrong");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <div className="mx-auto max-w-lg p-6">
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Edit Task</h1>
+
+          <Link
+            to="/dashboard"
+            className="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
+          >
+            Back
+          </Link>
+        </div>
+
+        <div className="rounded-lg bg-white p-6 shadow">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="mb-2 block">Task Name</label>
+
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Enter task name"
+                className="w-full rounded border p-3 outline-none focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block">Date & Time</label>
+
+              <input
+                type="datetime-local"
+                name="time"
+                value={formData.time}
+                onChange={handleChange}
+                className="w-full rounded border p-3 outline-none focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block">Description</label>
+
+              <textarea
+                name="description"
+                rows="4"
+                value={formData.description}
+                onChange={handleChange}
+                placeholder="Enter description"
+                className="w-full rounded border p-3 outline-none focus:border-blue-500"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="important"
+                name="isImportant"
+                checked={formData.isImportant}
+                onChange={handleChange}
+              />
+
+              <label htmlFor="important">Important</label>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full rounded bg-yellow-500 py-3 text-white hover:bg-yellow-600"
+            >
+              Update Task
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default EditTask;
